@@ -448,6 +448,62 @@ namespace svg
         std::vector<Point> points;
     };
 
+    class Path : public Shape
+    {
+    public:
+       Path(Fill const & fill = Fill(), Stroke const & stroke = Stroke())
+          : Shape(fill, stroke) 
+       {  startNewSubPath(); }
+       Path(Stroke const & stroke = Stroke()) : Shape(Color::Transparent, stroke) 
+       {  startNewSubPath(); }
+       Path & operator<<(Point const & point)
+       {
+          paths.back().push_back(point);
+          return *this;
+       }
+
+       void startNewSubPath()
+       {
+          if (paths.empty() || 0 < paths.back().size())
+            paths.emplace_back();
+       }
+
+       std::string toString(Layout const & layout) const
+       {
+          std::stringstream ss;
+          ss << elemStart("path");
+
+          ss << "d=\"";
+          for (auto const& subpath: paths)
+          {
+             if (subpath.empty())
+                continue;
+
+             ss << "M";
+             for (auto const& point: subpath)
+                ss << translateX(point.x, layout) << "," << translateY(point.y, layout) << " ";
+             ss << "z ";
+          }
+          ss << "\" ";
+          ss << "fill-rule=\"evenodd\" ";
+
+          ss << fill.toString(layout) << stroke.toString(layout) << emptyElemEnd();
+          return ss.str();
+       }
+
+       void offset(Point const & offset)
+       {
+          for (auto& subpath : paths)
+             for (auto& point : subpath)
+             {
+                point.x += offset.x;
+                point.y += offset.y;
+             }
+       }
+    private:
+       std::vector<std::vector<Point>> paths;
+    };
+
     class Polyline : public Shape
     {
     public:
