@@ -248,8 +248,8 @@ namespace svg
     class Stroke : public Serializeable
     {
     public:
-        Stroke(double width = -1, Color color = Color::Transparent)
-            : width(width), color(color) { }
+        Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false)
+            : width(width), color(color), nonScaling(nonScalingStroke) { }
         std::string toString(Layout const & layout) const
         {
             // If stroke width is invalid.
@@ -258,11 +258,14 @@ namespace svg
 
             std::stringstream ss;
             ss << attribute("stroke-width", translateScale(width, layout)) << attribute("stroke", color.toString(layout));
+            if (nonScaling)
+               ss << attribute("vector-effect", "non-scaling-stroke");
             return ss.str();
         }
     private:
         double width;
         Color color;
+        bool nonScaling;
     };
 
     class Font : public Serializeable
