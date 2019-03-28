@@ -664,19 +664,13 @@ namespace svg
 
         Document & operator<<(Shape const & shape)
         {
-            body_nodes_str += shape.toString(layout);
+            body_nodes_str_list.push_back(shape.toString(layout));
             return *this;
         }
         std::string toString() const
         {
             std::stringstream ss;
-            ss << "<?xml " << attribute("version", "1.0") << attribute("standalone", "no")
-                << "?>\n<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" "
-                << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n<svg "
-                << attribute("width", layout.dimensions.width, "px")
-                << attribute("height", layout.dimensions.height, "px")
-                << attribute("xmlns", "http://www.w3.org/2000/svg")
-                << attribute("version", "1.1") << ">\n" << body_nodes_str << elemEnd("svg");
+            writeToStream(ss);
             return ss.str();
         }
         bool save() const
@@ -685,15 +679,31 @@ namespace svg
             if (!ofs.good())
                 return false;
 
-            ofs << toString();
+            writeToStream(ofs);
             ofs.close();
             return true;
         }
     private:
+        void writeToStream(std::ostream& str) const
+        {
+            str << "<?xml " << attribute("version", "1.0") << attribute("standalone", "no")
+                << "?>\n<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" "
+                << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n<svg "
+                << attribute("width", layout.dimensions.width, "px")
+                << attribute("height", layout.dimensions.height, "px")
+                << attribute("xmlns", "http://www.w3.org/2000/svg")
+                << attribute("version", "1.1") << ">\n";
+            for (const auto& body_node_str : body_nodes_str_list) {
+                str << body_node_str;
+            }
+            str << elemEnd("svg");
+        }
+
+    private:
         std::string file_name;
         Layout layout;
 
-        std::string body_nodes_str;
+        std::vector<std::string> body_nodes_str_list;
     };
 }
 
