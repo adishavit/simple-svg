@@ -659,6 +659,7 @@ namespace svg
     class Document
     {
     public:
+        Document() {};
         Document(std::string const & file_name, Layout layout = Layout())
             : file_name(file_name), layout(layout) { }
 
