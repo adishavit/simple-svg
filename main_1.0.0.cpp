@@ -76,5 +76,10 @@ int main()
 
     doc << Rectangle(Point(70, 55), 20, 15, Color::Yellow);
 
+    Path path(Fill(), Stroke(5, Color::Blue, false, Stroke::Cap::Round, Stroke::Join::Round));
+    path << Point(0,0) << Point (10,0) << Point(10,5);
+    path.offset(Point(50,60));
+    doc << path;
+
     doc.save();
 }

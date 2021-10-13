@@ -247,8 +247,13 @@ namespace svg
     class Stroke : public Serializeable
     {
     public:
-        Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false)
-            : width(width), color(color), nonScaling(nonScalingStroke) { }
+        enum class Cap { Butt, Round, Square };
+        enum class Join { Miter, Round, Bevel };
+        Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false,
+                Cap capStyle = Cap::Butt, Join joinStyle = Join::Miter)
+            : width(width), color(color), nonScaling(nonScalingStroke),
+                capStyle(capStyle), joinStyle(joinStyle)
+        { }
         std::string toString(Layout const & layout) const
         {
             // If stroke width is invalid.
@@ -259,12 +264,23 @@ namespace svg
             ss << attribute("stroke-width", translateScale(width, layout)) << attribute("stroke", color.toString(layout));
             if (nonScaling)
                ss << attribute("vector-effect", "non-scaling-stroke");
+
+            if(capStyle == Cap::Butt) ss << attribute("stroke-linecap", "butt");
+            else if(capStyle == Cap::Round) ss << attribute("stroke-linecap", "round");
+            else if(capStyle == Cap::Square) ss << attribute("stroke-linecap", "square");
+
+            if(joinStyle == Join::Miter) ss << attribute("stroke-linejoin", "miter");
+            else if(joinStyle == Join::Round) ss << attribute("stroke-linejoin", "round");
+            else if(joinStyle == Join::Bevel) ss << attribute("stroke-linejoin", "bevel");
+
             return ss.str();
         }
     private:
         double width;
         Color color;
         bool nonScaling;
+        Cap capStyle;
+        Join joinStyle;
     };
 
     class Font : public Serializeable
