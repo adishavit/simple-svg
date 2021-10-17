@@ -450,6 +450,13 @@ namespace svg
         std::vector<Point> points;
     };
 
+    enum OpenOrClosed { Open=0, Closed=1 };
+    struct SubPath {
+        SubPath(OpenOrClosed isClosed) : isClosed(isClosed) {};
+        std::vector<Point> elements;
+        OpenOrClosed isClosed;
+    };
+
     class Path : public Shape
     {
     public:
@@ -460,14 +467,16 @@ namespace svg
        {  startNewSubPath(); }
        Path & operator<<(Point const & point)
        {
-          paths.back().push_back(point);
+          paths.back().elements.push_back(point);
           return *this;
        }
 
-       void startNewSubPath()
+       void startNewSubPath(OpenOrClosed isClosed = Closed)
        {
-          if (paths.empty() || 0 < paths.back().size())
-            paths.emplace_back();
+          if (paths.empty() || 0 < paths.back().elements.size())
+              paths.emplace_back(isClosed);
+          else
+              paths.back().isClosed = isClosed;
        }
 
        std::string toString(Layout const & layout) const
@@ -478,13 +487,13 @@ namespace svg
           ss << "d=\"";
           for (auto const& subpath: paths)
           {
-             if (subpath.empty())
+             if (subpath.elements.empty())
                 continue;
 
-             ss << "M";
-             for (auto const& point: subpath)
+             ss << " M";
+             for (auto const& point: subpath.elements)
                 ss << translateX(point.x, layout) << "," << translateY(point.y, layout) << " ";
-             ss << "z ";
+             if(static_cast<bool>(subpath.isClosed)) ss << " z";
           }
           ss << "\" ";
           ss << "fill-rule=\"evenodd\" ";
@@ -496,14 +505,14 @@ namespace svg
        void offset(Point const & offset)
        {
           for (auto& subpath : paths)
-             for (auto& point : subpath)
+             for (auto& point : subpath.elements)
              {
                 point.x += offset.x;
                 point.y += offset.y;
              }
        }
     private:
-       std::vector<std::vector<Point>> paths;
+       std::vector<SubPath> paths;
     };
 
     class Polyline : public Shape
