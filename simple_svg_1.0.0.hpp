@@ -247,10 +247,10 @@ namespace svg
     class Stroke : public Serializeable
     {
     public:
-        enum class Cap { Butt, Round, Square };
-        enum class Join { Miter, Round, Bevel };
+        enum Cap { CapUndefined, CapButt, CapRound, CapSquare };
+        enum Join { JoinUndefined, JoinMiter, JoinRound, JoinBevel };
         Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false,
-                Cap capStyle = Cap::Butt, Join joinStyle = Join::Miter)
+                Cap capStyle = CapUndefined, Join joinStyle = JoinUndefined)
             : width(width), color(color), nonScaling(nonScalingStroke),
                 capStyle(capStyle), joinStyle(joinStyle)
         { }
@@ -265,13 +265,19 @@ namespace svg
             if (nonScaling)
                ss << attribute("vector-effect", "non-scaling-stroke");
 
-            if(capStyle == Cap::Butt) ss << attribute("stroke-linecap", "butt");
-            else if(capStyle == Cap::Round) ss << attribute("stroke-linecap", "round");
-            else if(capStyle == Cap::Square) ss << attribute("stroke-linecap", "square");
+            switch(capStyle) {
+               case CapButt : ss << attribute("stroke-linecap", "butt"); break;
+               case CapRound : ss << attribute("stroke-linecap", "round"); break;
+               case CapSquare : ss << attribute("stroke-linecap", "square"); break;
+	       default : break;
+	    }
 
-            if(joinStyle == Join::Miter) ss << attribute("stroke-linejoin", "miter");
-            else if(joinStyle == Join::Round) ss << attribute("stroke-linejoin", "round");
-            else if(joinStyle == Join::Bevel) ss << attribute("stroke-linejoin", "bevel");
+            switch(capStyle) {
+               case JoinMiter : ss << attribute("stroke-linejoin", "miter"); break;
+               case JoinRound : ss << attribute("stroke-linejoin", "round"); break;
+               case JoinBevel : ss << attribute("stroke-linejoin", "bevel"); break;
+	       default : break;
+            }
 
             return ss.str();
         }
