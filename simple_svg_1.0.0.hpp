@@ -450,11 +450,11 @@ namespace svg
         std::vector<Point> points;
     };
 
-    enum OpenOrClosed { Closed, Open };
+    enum OpenOrClosed { Open=0, Closed=1 };
     struct SubPath {
-        SubPath(bool close) : close(close) {};
+        SubPath(OpenOrClosed isClosed) : isClosed(isClosed) {};
         std::vector<Point> elements;
-        bool close = true;
+        OpenOrClosed isClosed;
     };
 
     class Path : public Shape
@@ -471,12 +471,12 @@ namespace svg
           return *this;
        }
 
-       void startNewSubPath(OpenOrClosed closure = Closed)
+       void startNewSubPath(OpenOrClosed isClosed = Closed)
        {
           if (paths.empty() || 0 < paths.back().elements.size())
-              paths.emplace_back(closure == Closed);
+              paths.emplace_back(isClosed);
           else
-              paths.back().close = (closure == Closed);
+              paths.back().isClosed = isClosed;
        }
 
        std::string toString(Layout const & layout) const
@@ -493,7 +493,7 @@ namespace svg
              ss << " M";
              for (auto const& point: subpath.elements)
                 ss << translateX(point.x, layout) << "," << translateY(point.y, layout) << " ";
-             if(subpath.close) ss << " z";
+             if(static_cast<bool>(subpath.isClosed)) ss << " z";
           }
           ss << "\" ";
           ss << "fill-rule=\"evenodd\" ";
