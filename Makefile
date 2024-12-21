@@ -41,7 +41,6 @@ $(TEST_TARGET): $(TEST_TARGET).cpp
 		-I$(GTEST_DIR)/include \
 		-L$(GTEST_LIB) \
 		-lgtest -lgtest_main -pthread
-	./$(TEST_TARGET)
 
 test: $(TEST_TARGET) run-test
 
