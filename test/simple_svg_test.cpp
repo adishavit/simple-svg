@@ -220,6 +220,23 @@ TEST(SimpleSvgTest, StrokeTest)
     EXPECT_TRUE(docStr.find("stroke=\"rgb(0,0,255)\"") != std::string::npos);
 }
 
+TEST(SimpleSvgTest, GroupTest)
+{
+    Document doc;
+    Group group(Fill(Color::Red), Stroke(2, Color::Black));
+    group << Circle(Point(100, 100), 50, Fill(Color::Blue));
+    group << Rectangle(Point(200, 200), 100, 50, Fill(Color::Green));
+    doc << group;
+    std::string docStr = doc.toString();
+
+    // std::cout << "GroupTest SVG:\n"
+    //           << docStr << std::endl;
+
+    EXPECT_TRUE(docStr.find("<g fill=\"rgb(255,0,0)\" stroke-width=\"2\" stroke=\"rgb(0,0,0)\"") != std::string::npos);
+    EXPECT_TRUE(docStr.find("<circle cx=\"100\" cy=\"200\" r=\"25\" fill=\"rgb(0,0,255)\"") != std::string::npos);
+    EXPECT_TRUE(docStr.find("<rect x=\"200\" y=\"100\" width=\"100\" height=\"50\" fill=\"rgb(0,128,0)\"") != std::string::npos);
+}
+
 // Run the tests -----------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {

@@ -263,7 +263,7 @@ namespace svg
             }
         }
         virtual ~Color() {}
-        std::string toString(Layout const &) const
+        std::string toString(Layout const &) const override
         {
             std::stringstream ss;
             if (transparent)
@@ -293,7 +293,7 @@ namespace svg
         Fill(Color::Defaults color) : color(color) {}
         Fill(Color color = Color::Transparent)
             : color(color) {}
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << attribute("fill", color.toString(layout));
@@ -311,7 +311,7 @@ namespace svg
                std::string linecap = "", std::string linejoin = "", std::string dasharray = "")
             : width(width), color(color), nonScaling(nonScalingStroke), linecap(linecap), linejoin(linejoin), dasharray(dasharray) {}
 
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             if (width < 0)
                 return std::string();
@@ -342,7 +342,7 @@ namespace svg
     {
     public:
         Font(double size = 12, std::string const &family = "Verdana") : size(size), family(family) {}
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << attribute("font-size", translateScale(size, layout)) << attribute("font-family", family);
@@ -362,6 +362,7 @@ namespace svg
         virtual ~Shape() {}
         virtual std::string toString(Layout const &layout) const = 0;
         virtual void offset(Point const &offset) = 0;
+        virtual std::unique_ptr<Shape> clone() const = 0;
 
     protected:
         Fill fill;
@@ -383,7 +384,8 @@ namespace svg
         Circle(Point const &center, double diameter, Fill const &fill,
                Stroke const &stroke = Stroke())
             : Shape(fill, stroke), center(center), radius(diameter / 2) {}
-        std::string toString(Layout const &layout) const
+
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("circle") << attribute("cx", translateX(center.x, layout))
@@ -392,10 +394,15 @@ namespace svg
                << stroke.toString(layout) << emptyElemEnd();
             return ss.str();
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             center.x += offset.x;
             center.y += offset.y;
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Circle>(*this);
         }
 
     private:
@@ -410,7 +417,8 @@ namespace svg
                Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke), center(center), radius_width(width / 2),
               radius_height(height / 2) {}
-        std::string toString(Layout const &layout) const
+
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("ellipse") << attribute("cx", translateX(center.x, layout))
@@ -420,10 +428,15 @@ namespace svg
                << fill.toString(layout) << stroke.toString(layout) << emptyElemEnd();
             return ss.str();
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             center.x += offset.x;
             center.y += offset.y;
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Elipse>(*this);
         }
 
     private:
@@ -439,7 +452,7 @@ namespace svg
                   Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke), edge(edge), width(width),
               height(height) {}
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("rect") << attribute("x", translateX(edge.x, layout))
@@ -449,10 +462,15 @@ namespace svg
                << fill.toString(layout) << stroke.toString(layout) << emptyElemEnd();
             return ss.str();
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             edge.x += offset.x;
             edge.y += offset.y;
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Rectangle>(*this);
         }
 
     private:
@@ -468,7 +486,7 @@ namespace svg
              Stroke const &stroke = Stroke())
             : Shape(Fill(), stroke), start_point(start_point),
               end_point(end_point) {}
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("line") << attribute("x1", translateX(start_point.x, layout))
@@ -478,13 +496,18 @@ namespace svg
                << stroke.toString(layout) << emptyElemEnd();
             return ss.str();
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             start_point.x += offset.x;
             start_point.y += offset.y;
 
             end_point.x += offset.x;
             end_point.y += offset.y;
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Line>(*this);
         }
 
     private:
@@ -503,7 +526,7 @@ namespace svg
             points.push_back(point);
             return *this;
         }
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("polygon");
@@ -516,13 +539,18 @@ namespace svg
             ss << fill.toString(layout) << stroke.toString(layout) << emptyElemEnd();
             return ss.str();
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             for (unsigned i = 0; i < points.size(); ++i)
             {
                 points[i].x += offset.x;
                 points[i].y += offset.y;
             }
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Polygon>(*this);
         }
 
     private:
@@ -553,7 +581,7 @@ namespace svg
                 paths.emplace_back();
         }
 
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("path");
@@ -576,7 +604,7 @@ namespace svg
             return ss.str();
         }
 
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             for (auto &subpath : paths)
                 for (auto &point : subpath)
@@ -584,6 +612,11 @@ namespace svg
                     point.x += offset.x;
                     point.y += offset.y;
                 }
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Path>(*this);
         }
 
     private:
@@ -604,7 +637,7 @@ namespace svg
             points.push_back(point);
             return *this;
         }
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("polyline");
@@ -617,7 +650,7 @@ namespace svg
             ss << fill.toString(layout) << stroke.toString(layout) << emptyElemEnd();
             return ss.str();
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             for (unsigned i = 0; i < points.size(); ++i)
             {
@@ -626,6 +659,11 @@ namespace svg
             }
         }
         std::vector<Point> points;
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Polyline>(*this);
+        }
     };
 
     class Text : public Shape
@@ -634,7 +672,8 @@ namespace svg
         Text(Point const &origin, std::string const &content, Fill const &fill = Fill(),
              Font const &font = Font(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke), origin(origin), content(content), font(font) {}
-        std::string toString(Layout const &layout) const
+
+        std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
             ss << elemStart("text") << attribute("x", translateX(origin.x, layout))
@@ -643,10 +682,15 @@ namespace svg
                << ">" << content << elemEnd("text");
             return ss.str();
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             origin.x += offset.x;
             origin.y += offset.y;
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<Text>(*this);
         }
 
     private:
@@ -670,7 +714,7 @@ namespace svg
             polylines.push_back(polyline);
             return *this;
         }
-        std::string toString(Layout const &layout) const
+        std::string toString(Layout const &layout) const override
         {
             if (polylines.empty())
                 return "";
@@ -681,10 +725,15 @@ namespace svg
 
             return ret + axisString(layout);
         }
-        void offset(Point const &offset)
+        void offset(Point const &offset) override
         {
             for (unsigned i = 0; i < polylines.size(); ++i)
                 polylines[i].offset(offset);
+        }
+
+        virtual std::unique_ptr<Shape> clone() const override
+        {
+            return std::make_unique<LineChart>(*this);
         }
 
     private:
@@ -742,6 +791,73 @@ namespace svg
 
             return shifted_polyline.toString(layout) + vectorToString(vertices, layout);
         }
+    };
+
+
+    class Group : public Shape
+    {
+    public:
+        Group(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+            : Shape(fill, stroke) {}
+
+        Group(const Group&) = delete;
+        Group& operator=(const Group&) = delete;
+
+        Group(Group&& other) noexcept
+            : Shape(std::move(other)), shapes(std::move(other.shapes)) {}
+
+        Group& operator=(Group&& other) noexcept
+        {
+            if (this != &other)
+            {
+                Shape::operator=(std::move(other));
+                shapes = std::move(other.shapes);
+            }
+            return *this;
+        }
+
+        Group &operator<<(Shape const &shape)
+        {
+            shapes.push_back(shape.clone());
+            return *this;
+        }
+
+        std::string toString(Layout const &layout) const override
+        {
+            std::stringstream ss;
+            ss << elemStart("g");
+            ss << fill.toString(layout) << stroke.toString(layout);
+            ss << ">\n";
+
+            for (const auto &shape : shapes)
+            {
+                ss << shape->toString(layout); // << "\n"; // No need for new line if the shape provides one
+            }
+
+            ss << elemEnd("g");
+            return ss.str();
+        }
+
+        void offset(Point const &offset) override
+        {
+            for (auto &shape : shapes)
+            {
+                shape->offset(offset);
+            }
+        }
+
+        std::unique_ptr<Shape> clone() const override
+        {
+            auto new_group = std::make_unique<Group>(fill, stroke);
+            for (const auto& shape : shapes)
+            {
+                new_group->shapes.push_back(shape->clone());
+            }
+            return new_group;
+        }
+
+    private:
+        std::vector<std::unique_ptr<Shape>> shapes;
     };
 
     class Document
