@@ -78,6 +78,12 @@ int main()
 
     doc << Rectangle(Point(350, 275), 100, 75, Color::Yellow);
 
+    Group myGroup(Fill(Color::Red), Stroke(2, Color::Black));
+    myGroup << Circle(Point(100, 100), 50, Fill(Color::Blue))
+            << Rectangle(Point(200, 200), 100, 50, Fill(Color::Green));
+
+    doc << myGroup;
+
     doc.save();
 
     std::cout << "SVG saved to: " << filename << std::endl;
