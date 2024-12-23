@@ -357,17 +357,30 @@ namespace svg
     class Shape : public Serializeable
     {
     public:
-        Shape(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
-            : fill(fill), stroke(stroke) {}
+        Shape(Fill const &fill = Fill(), Stroke const &stroke = Stroke(), double rotation = 0)
+            : fill(fill), stroke(stroke), rotation(rotation) {}
         virtual ~Shape() {}
         virtual std::string toString(Layout const &layout) const = 0;
         virtual void offset(Point const &offset) = 0;
         virtual std::unique_ptr<Shape> clone() const = 0;
 
+        void setRotation(double degrees) { rotation = degrees; }
+        double getRotation() const { return rotation; }
+
     protected:
         Fill fill;
         Stroke stroke;
+        double rotation;
+
+        std::string getRotationString() const
+        {
+            if (rotation == 0) return "";
+            std::stringstream ss;
+            ss << " transform=\"rotate(" << rotation << ")\"";
+            return ss.str();
+        }
     };
+
     template <typename T>
     inline std::string vectorToString(std::vector<T> collection, Layout const &layout)
     {
@@ -670,8 +683,8 @@ namespace svg
     {
     public:
         Text(Point const &origin, std::string const &content, Fill const &fill = Fill(),
-             Font const &font = Font(), Stroke const &stroke = Stroke())
-            : Shape(fill, stroke), origin(origin), content(content), font(font) {}
+             Font const &font = Font(), Stroke const &stroke = Stroke(), double rotation = 0)
+            : Shape(fill, stroke, rotation), origin(origin), content(content), font(font) {}
 
         std::string toString(Layout const &layout) const override
         {
@@ -679,9 +692,11 @@ namespace svg
             ss << elemStart("text") << attribute("x", translateX(origin.x, layout))
                << attribute("y", translateY(origin.y, layout))
                << fill.toString(layout) << stroke.toString(layout) << font.toString(layout)
+               << getRotationString() // Include rotation
                << ">" << content << elemEnd("text");
             return ss.str();
         }
+
         void offset(Point const &offset) override
         {
             origin.x += offset.x;
@@ -878,8 +893,10 @@ namespace svg
             writeToStream(ss);
             return ss.str();
         }
-        bool save() const
+
+        bool save() const  // TODO remove save
         {
+            std::cerr << "Saving to " << file_name << "...\n";
             std::ofstream ofs(file_name.c_str());
             if (!ofs.good())
                 return false;
