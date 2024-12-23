@@ -35,6 +35,9 @@ protected:
 
 TEST_F(SVGTest, ColorTest)
 {
+    Color defaultBlack;
+    EXPECT_EQ(defaultBlack.toString(layout), "rgb(0,0,0)");
+
     Color red(255, 0, 0);
     EXPECT_EQ(red.toString(layout), "rgb(255,0,0)");
 

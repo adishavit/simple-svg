@@ -206,6 +206,7 @@ namespace svg
             Yellow
         };
 
+        Color() : transparent(false), red(0), green(0), blue(0) {} // Default constructor
         Color(int r, int g, int b) : transparent(false), red(r), green(g), blue(b) {}
         Color(Defaults color)
             : transparent(false), red(0), green(0), blue(0)
