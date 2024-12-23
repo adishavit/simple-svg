@@ -126,6 +126,7 @@ namespace svg
             return *this;
         }
     };
+
     inline optional<Point> getMinPoint(std::vector<Point> const &points)
     {
         if (points.empty())
@@ -155,6 +156,18 @@ namespace svg
                 max.y = points[i].y;
         }
         return optional<Point>(max);
+    }
+
+    struct Size
+    {
+        Size(double w = 0, double h = 0) : w(w), h(h) {}
+        double w;
+        double h;
+    };
+
+    inline Point operator+(Point const &p, Size const &s)
+    {
+        return Point(p.x + s.w, p.y + s.h);
     }
 
     // Defines the dimensions, scale, origin, and origin offset of the document.

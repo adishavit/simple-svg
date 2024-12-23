@@ -33,6 +33,15 @@ protected:
     }
 };
 
+TEST_F(SVGTest, PointTest)
+{
+    Point p(10, 20);
+    Size s(5, 10);
+    Point other = p + s;
+    EXPECT_EQ(other.x, 15);
+    EXPECT_EQ(other.y, 30);
+}
+
 TEST_F(SVGTest, ColorTest)
 {
     Color defaultBlack;
