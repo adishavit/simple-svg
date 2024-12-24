@@ -33,8 +33,20 @@ protected:
     }
 };
 
+TEST_F(SVGTest, PointTest)
+{
+    Point p(10, 20);
+    Size s(5, 10);
+    Point other = p + s;
+    EXPECT_EQ(other.x, 15);
+    EXPECT_EQ(other.y, 30);
+}
+
 TEST_F(SVGTest, ColorTest)
 {
+    Color defaultBlack;
+    EXPECT_EQ(defaultBlack.toString(layout), "rgb(0,0,0)");
+
     Color red(255, 0, 0);
     EXPECT_EQ(red.toString(layout), "rgb(255,0,0)");
 
@@ -78,6 +90,37 @@ TEST_F(SVGTest, TextTest)
     EXPECT_TRUE(textStr.find("font-size=\"12\"") != std::string::npos);
     EXPECT_TRUE(textStr.find("font-family=\"Arial\"") != std::string::npos);
     EXPECT_TRUE(textStr.find(">Hello SVG<") != std::string::npos);
+}
+
+TEST(SimpleSvgTest, TextTest)
+{
+    Document doc;
+    doc << Text(Point(10, 20), "Hello, SVG!", Fill(Color::Black), Font(12, "Arial"));
+    std::string docStr = doc.toString();
+
+    // std::cout << "TextTest SVG:\n"
+    //           << docStr << std::endl;
+
+    EXPECT_TRUE(docStr.find("<text x=\"10\" y=\"280\"") != std::string::npos);
+    EXPECT_TRUE(docStr.find("font-size=\"12\"") != std::string::npos);
+    EXPECT_TRUE(docStr.find("font-family=\"Arial\"") != std::string::npos);
+    EXPECT_TRUE(docStr.find(">Hello, SVG!</text>") != std::string::npos);
+}
+
+TEST_F(SVGTest, TextTestRotation)
+{
+    Text text(Point(50, 50), "Rotated Text", Fill(Color::Black), Font(12, "Arial"), Stroke(), 45);
+    std::string textStr = text.toString(layout);
+
+    std::cout << "TextTestRotation SVG:\n" << textStr << std::endl;
+
+    EXPECT_TRUE(textStr.find("x=\"50\"") != std::string::npos);
+    EXPECT_TRUE(textStr.find("y=\"50\"") != std::string::npos);
+    EXPECT_TRUE(textStr.find("font-size=\"12\"") != std::string::npos);
+    EXPECT_TRUE(textStr.find("font-family=\"Arial\"") != std::string::npos);
+    EXPECT_TRUE(textStr.find("fill=\"rgb(0,0,0)\"") != std::string::npos);
+    EXPECT_TRUE(textStr.find("transform=\"rotate(45 50 50)\"") != std::string::npos);
+    EXPECT_TRUE(textStr.find(">Rotated Text<") != std::string::npos);
 }
 
 TEST_F(SVGTest, LineChartTest)
@@ -135,6 +178,7 @@ TEST(SimpleSvgTest, PolygonTest)
     Polygon polygon(Fill(Color::Green), Stroke(1, Color::Black));
     polygon << Point(0, 0) << Point(100, 0) << Point(100, 100) << Point(0, 100);
     doc << polygon;
+
     std::string docStr = doc.toString();
 
     // std::cout << "PolygonTest SVG:\n"
@@ -143,21 +187,6 @@ TEST(SimpleSvgTest, PolygonTest)
     EXPECT_TRUE(docStr.find("<polygon points=\"0,300 100,300 100,200 0,200 \"") != std::string::npos);
     EXPECT_TRUE(docStr.find("fill=\"rgb(0,128,0)\"") != std::string::npos);
     EXPECT_TRUE(docStr.find("stroke=\"rgb(0,0,0)\"") != std::string::npos);
-}
-
-TEST(SimpleSvgTest, TextTest)
-{
-    Document doc;
-    doc << Text(Point(10, 20), "Hello, SVG!", Fill(Color::Black), Font(12, "Arial"));
-    std::string docStr = doc.toString();
-
-    // std::cout << "TextTest SVG:\n"
-    //           << docStr << std::endl;
-
-    EXPECT_TRUE(docStr.find("<text x=\"10\" y=\"280\"") != std::string::npos);
-    EXPECT_TRUE(docStr.find("font-size=\"12\"") != std::string::npos);
-    EXPECT_TRUE(docStr.find("font-family=\"Arial\"") != std::string::npos);
-    EXPECT_TRUE(docStr.find(">Hello, SVG!</text>") != std::string::npos);
 }
 
 TEST(SimpleSvgTest, LineChartTest)
