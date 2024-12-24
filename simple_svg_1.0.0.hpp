@@ -29,6 +29,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
 
+/**
+ * @rudifa
+ * Add rotation to SVG elements: work in progress.
+ *
+ * This version implements and tests the folllowing features:
+ * - Rotation of Text around its origin.
+ * - Rotation of other elements needs to be fixed and tested.
+ */
+
 #ifndef SIMPLE_SVG_HPP
 #define SIMPLE_SVG_HPP
 
@@ -102,6 +111,20 @@ namespace svg
         Point(double x = 0, double y = 0) : x(x), y(y) {}
         double x;
         double y;
+
+        Point &operator+=(const Point &rhs)
+        {
+            x += rhs.x;
+            y += rhs.y;
+            return *this;
+        }
+
+        Point &operator/=(double scalar)
+        {
+            x /= scalar;
+            y /= scalar;
+            return *this;
+        }
     };
     inline optional<Point> getMinPoint(std::vector<Point> const &points)
     {
@@ -350,6 +373,8 @@ namespace svg
             return ss.str();
         }
 
+        double getSize() const { return size; }
+
     private:
         double size;
         std::string family;
@@ -368,6 +393,8 @@ namespace svg
         void setRotation(double degrees) { rotation = degrees; }
         double getRotation() const { return rotation; }
 
+        virtual Point getRotationCenter() const = 0;
+
     protected:
         Fill fill;
         Stroke stroke;
@@ -375,9 +402,11 @@ namespace svg
 
         std::string getRotationString() const
         {
-            if (rotation == 0) return "";
+            if (rotation == 0)
+                return "";
+            Point center = getRotationCenter();
             std::stringstream ss;
-            ss << " transform=\"rotate(" << rotation << ")\"";
+            ss << " transform=\"rotate(" << rotation << " " << center.x << " " << center.y << ")\"";
             return ss.str();
         }
     };
@@ -414,6 +443,11 @@ namespace svg
             center.y += offset.y;
         }
 
+        Point getRotationCenter() const override
+        {
+            return center;
+        }
+
         virtual std::unique_ptr<Shape> clone() const override
         {
             return std::make_unique<Circle>(*this);
@@ -448,7 +482,12 @@ namespace svg
             center.y += offset.y;
         }
 
-        virtual std::unique_ptr<Shape> clone() const override
+        Point getRotationCenter() const override
+        {
+            return center;
+        }
+
+            virtual std::unique_ptr<Shape> clone() const override
         {
             return std::make_unique<Elipse>(*this);
         }
@@ -480,6 +519,11 @@ namespace svg
         {
             edge.x += offset.x;
             edge.y += offset.y;
+        }
+
+        Point getRotationCenter() const override
+        {
+            return Point(edge.x + width / 2, edge.y + height / 2);
         }
 
         virtual std::unique_ptr<Shape> clone() const override
@@ -517,6 +561,11 @@ namespace svg
 
             end_point.x += offset.x;
             end_point.y += offset.y;
+        }
+
+        Point getRotationCenter() const override
+        {
+            return Point((start_point.x + end_point.x) / 2, (start_point.y + end_point.y) / 2);
         }
 
         virtual std::unique_ptr<Shape> clone() const override
@@ -560,6 +609,19 @@ namespace svg
                 points[i].x += offset.x;
                 points[i].y += offset.y;
             }
+        }
+
+        Point getRotationCenter() const override
+        {
+            if (points.empty())
+                return Point();
+            double sumX = 0, sumY = 0;
+            for (const auto &point : points)
+            {
+                sumX += point.x;
+                sumY += point.y;
+            }
+            return Point(sumX / points.size(), sumY / points.size());
         }
 
         virtual std::unique_ptr<Shape> clone() const override
@@ -628,6 +690,21 @@ namespace svg
                 }
         }
 
+        Point getRotationCenter() const override
+        {
+
+            if (paths.empty())
+                return Point();
+            double sumX = 0, sumY = 0;
+            for (auto const &subpath : paths)
+                for (auto const &point : subpath)
+                {
+                    sumX += point.x;
+                    sumY += point.y;
+                }
+                return Point(sumX / paths.size(), sumY / paths.size());
+        }
+
         virtual std::unique_ptr<Shape> clone() const override
         {
             return std::make_unique<Path>(*this);
@@ -674,6 +751,19 @@ namespace svg
         }
         std::vector<Point> points;
 
+        Point getRotationCenter() const override
+        {
+            if (points.empty())
+                return Point();
+            double sumX = 0, sumY = 0;
+            for (const auto &point : points)
+            {
+                sumX += point.x;
+                sumY += point.y;
+            }
+            return Point(sumX / points.size(), sumY / points.size());
+        }
+
         virtual std::unique_ptr<Shape> clone() const override
         {
             return std::make_unique<Polyline>(*this);
@@ -702,6 +792,24 @@ namespace svg
         {
             origin.x += offset.x;
             origin.y += offset.y;
+        }
+
+        Point getRotationCenter() const override
+        {
+            return origin;
+        }
+
+        Point getRotationCenterText() const // a possible future option
+        {
+            // Estimate the bounding box based on font metrics
+            double textWidth = content.length() * font.getSize() * 0.6;  // Rough estimate
+            double textHeight = font.getSize();
+
+            // Calculate the center based on the estimated bounding box
+            double centerX = origin.x + textWidth / 2;
+            double centerY = origin.y - textHeight / 2;  // Subtract half height because SVG text origin is at the baseline
+
+            return Point(centerX, centerY);
         }
 
         virtual std::unique_ptr<Shape> clone() const override
@@ -747,6 +855,26 @@ namespace svg
                 polylines[i].offset(offset);
         }
 
+        Point getRotationCenter() const override
+        {
+            if (polylines.empty())
+                return Point();
+            Point min = polylines[0].getRotationCenter();
+            Point max = min;
+            for (const auto& polyline : polylines)
+            {
+                Point center = polyline.getRotationCenter();
+                if (center.x < min.x)
+                    min.x = center.x;
+                if (center.y < min.y)
+                    min.y = center.y;
+                if (center.x > max.x)
+                    max.x = center.x;
+                if (center.y > max.y)
+                    max.y = center.y;
+            }
+            return Point((min.x + max.x) / 2, (min.y + max.y) / 2);
+        }
         virtual std::unique_ptr<Shape> clone() const override
         {
             return std::make_unique<LineChart>(*this);
@@ -758,30 +886,50 @@ namespace svg
         [[maybe_unused]] double scale;
         std::vector<Polyline> polylines;
 
-        optional<Dimensions> getDimensions() const
+        // optional<Dimensions> getDimensions() const
+        // {
+        //     if (polylines.empty())
+        //         return optional<Dimensions>();
+
+        //     optional<Point> min = getMinPoint(polylines[0].points);
+        //     optional<Point> max = getMaxPoint(polylines[0].points);
+        //     for (unsigned i = 0; i < polylines.size(); ++i)
+        //     {
+        //         if (getMinPoint(polylines[i].points)->x < min->x)
+        //             min->x = getMinPoint(polylines[i].points)->x;
+        //         if (getMinPoint(polylines[i].points)->y < min->y)
+        //             min->y = getMinPoint(polylines[i].points)->y;
+        //         if (getMaxPoint(polylines[i].points)->x > max->x)
+        //             max->x = getMaxPoint(polylines[i].points)->x;
+        //         if (getMaxPoint(polylines[i].points)->y > max->y)
+        //             max->y = getMaxPoint(polylines[i].points)->y;
+        //     }
+
+        //     return optional<Dimensions>(Dimensions(max->x - min->x, max->y - min->y));
+        // }
+        std::optional<Dimensions> getDimensions() const
         {
             if (polylines.empty())
-                return optional<Dimensions>();
+                return std::nullopt;
 
-            optional<Point> min = getMinPoint(polylines[0].points);
-            optional<Point> max = getMaxPoint(polylines[0].points);
-            for (unsigned i = 0; i < polylines.size(); ++i)
+            Point min = polylines[0].points[0];
+            Point max = min;
+            for (const auto& polyline : polylines)
             {
-                if (getMinPoint(polylines[i].points)->x < min->x)
-                    min->x = getMinPoint(polylines[i].points)->x;
-                if (getMinPoint(polylines[i].points)->y < min->y)
-                    min->y = getMinPoint(polylines[i].points)->y;
-                if (getMaxPoint(polylines[i].points)->x > max->x)
-                    max->x = getMaxPoint(polylines[i].points)->x;
-                if (getMaxPoint(polylines[i].points)->y > max->y)
-                    max->y = getMaxPoint(polylines[i].points)->y;
+                for (const auto& point : polyline.points)
+                {
+                    min.x = std::min(min.x, point.x);
+                    min.y = std::min(min.y, point.y);
+                    max.x = std::max(max.x, point.x);
+                    max.y = std::max(max.y, point.y);
+                }
             }
 
-            return optional<Dimensions>(Dimensions(max->x - min->x, max->y - min->y));
+            return Dimensions(max.x - min.x, max.y - min.y);
         }
         std::string axisString(Layout const &layout) const
         {
-            optional<Dimensions> dimensions = getDimensions();
+            std::optional<Dimensions> dimensions = getDimensions();
             if (!dimensions)
                 return "";
 
@@ -862,7 +1010,18 @@ namespace svg
             }
         }
 
-        std::unique_ptr<Shape> clone() const override
+        Point getRotationCenter() const override
+        {
+            Point center;
+            for (const auto &shape : shapes)
+            {
+                center += shape->getRotationCenter();
+            }
+            center /= shapes.size();
+            return center;
+        }
+
+            std::unique_ptr<Shape> clone() const override
         {
             auto new_group = std::make_unique<Group>(fill, stroke);
             for (const auto& shape : shapes)

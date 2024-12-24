@@ -103,14 +103,14 @@ TEST_F(SVGTest, TextTestRotation)
     Text text(Point(50, 50), "Rotated Text", Fill(Color::Black), Font(12, "Arial"), Stroke(), 45);
     std::string textStr = text.toString(layout);
 
-    // std::cout << "TextTestRotation SVG:\n" << textStr << std::endl;
+    std::cout << "TextTestRotation SVG:\n" << textStr << std::endl;
 
     EXPECT_TRUE(textStr.find("x=\"50\"") != std::string::npos);
     EXPECT_TRUE(textStr.find("y=\"50\"") != std::string::npos);
     EXPECT_TRUE(textStr.find("font-size=\"12\"") != std::string::npos);
     EXPECT_TRUE(textStr.find("font-family=\"Arial\"") != std::string::npos);
     EXPECT_TRUE(textStr.find("fill=\"rgb(0,0,0)\"") != std::string::npos);
-    EXPECT_TRUE(textStr.find("transform=\"rotate(45)\"") != std::string::npos);
+    EXPECT_TRUE(textStr.find("transform=\"rotate(45 50 50)\"") != std::string::npos);
     EXPECT_TRUE(textStr.find(">Rotated Text<") != std::string::npos);
 }
 

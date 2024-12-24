@@ -80,7 +80,7 @@ void demo()
     rect.setRotation(60);
     doc << rect;
 
-    Group myGroup(Fill(Color::Red), Stroke(2, Color::Black));
+        Group myGroup(Fill(Color::Red), Stroke(2, Color::Black));
     myGroup << Circle(Point(100, 100), 50, Fill(Color::Blue))
             << Rectangle(Point(200, 200), 100, 50, Fill(Color::Green));
 
@@ -106,7 +106,7 @@ void demo2()
     Dimensions dimensions(200, 200);
 
     // Use TopLeft layout so that (0, 0) is the top left corner of the SVG
-    // but the coordinates in use are relative to the bottom left corner.
+    // but specify coordinates in user space (origin at bottom left, +y axis upwards)
     Document doc(filename, Layout(dimensions, Layout::TopLeft));
 
     Rectangle rect1(Point(0, 0), 100, 100, Fill(), Stroke(1, Color::Blue, true));
@@ -114,18 +114,19 @@ void demo2()
 
     Rectangle rect2(Point(100, 100), 100, 100, Fill(), Stroke(1, Color::Red, true));
     doc << rect2;
-    // rect2.setRotation(30);
-    // doc << rect2;
 
-    Text text0(Point(0, 0), "Hello world!", Color::Black, Font(10, "Verdana"), 90);
-    doc << text0;
-    text0.setRotation(45);
-    doc << text0;
-
-    Text text100(Point(100, 100), "Hello world!", Color::Black, Font(10, "Verdana"), 90);
-    doc << text100;
-    text100.setRotation(45);
-    doc << text100;
+    {
+        Text text(Point(0, 0), "Hello world!", Color::Black, Font(10, "Verdana"), 90);
+        doc << text;
+        text.setRotation(45);
+        doc << text;
+    }
+    {
+        Text text(Point(100, 100), "Hello world!", Color::Black, Font(10, "Verdana"), 90);
+        doc << text;
+        text.setRotation(45);
+        doc << text;
+    }
 
     doc.save();
 
