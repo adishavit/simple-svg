@@ -79,7 +79,7 @@ namespace svg
     class optional
     {
     public:
-        optional<T>(T const &type)
+        explicit optional<T>(T const &type)
             : valid(true), type(type) {}
         optional<T>() : valid(false), type(T()) {}
         T *operator->()
@@ -101,14 +101,14 @@ namespace svg
     struct Dimensions
     {
         Dimensions(double width, double height) : width(width), height(height) {}
-        Dimensions(double combined = 0) : width(combined), height(combined) {}
+        explicit Dimensions(double combined = 0) : width(combined), height(combined) {}
         double width;
         double height;
     };
 
     struct Point
     {
-        Point(double x = 0, double y = 0) : x(x), y(y) {}
+        explicit Point(double x = 0, double y = 0) : x(x), y(y) {}
         double x;
         double y;
 
@@ -160,7 +160,7 @@ namespace svg
 
     struct Size
     {
-        Size(double w = 0, double h = 0) : w(w), h(h) {}
+        explicit Size(double w = 0, double h = 0) : w(w), h(h) {}
         double w;
         double h;
     };
@@ -181,8 +181,8 @@ namespace svg
             BottomRight
         };
 
-        Layout(Dimensions const &dimensions = Dimensions(400, 300), Origin origin = BottomLeft,
-               double scale = 1, Point const &origin_offset = Point(0, 0))
+        explicit Layout(Dimensions const &dimensions = Dimensions(400, 300), Origin origin = BottomLeft,
+                        double scale = 1, Point const &origin_offset = Point(0, 0))
             : dimensions(dimensions), scale(scale), origin(origin), origin_offset(origin_offset) {}
         Dimensions dimensions;
         double scale;
@@ -244,7 +244,7 @@ namespace svg
 
         Color() : transparent(false), red(0), green(0), blue(0) {} // Default constructor
         Color(int r, int g, int b) : transparent(false), red(r), green(g), blue(b) {}
-        Color(Defaults color)
+        explicit Color(Defaults color)
             : transparent(false), red(0), green(0), blue(0)
         {
             switch (color)
@@ -299,7 +299,8 @@ namespace svg
                 break;
             }
         }
-        virtual ~Color() {}
+        virtual ~Color() override {}
+
         std::string toString(Layout const &) const override
         {
             std::stringstream ss;
@@ -327,8 +328,8 @@ namespace svg
     class Fill : public Serializeable
     {
     public:
-        Fill(Color::Defaults color) : color(color) {}
-        Fill(Color color = Color::Transparent)
+        explicit Fill(Color::Defaults color) : color(color) {}
+        explicit Fill(Color color = Color::Transparent)
             : color(color) {}
         std::string toString(Layout const &layout) const override
         {
@@ -344,9 +345,9 @@ namespace svg
     class Stroke : public Serializeable
     {
     public:
-        Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false,
-               std::string linecap = "", std::string linejoin = "", std::string dasharray = "")
-            : width(width), color(color), nonScaling(nonScalingStroke), linecap(linecap), linejoin(linejoin), dasharray(dasharray) {}
+        explicit Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false,
+                        std::string linecap = "", std::string linejoin = "", const std::string &dasharray = "")
+            : width(width), color(color), nonScaling(nonScalingStroke), linecap(linecap), linejoin(const linejoin), dasharray(dasharray) {}
 
         std::string toString(Layout const &layout) const override
         {
@@ -378,7 +379,7 @@ namespace svg
     class Font : public Serializeable
     {
     public:
-        Font(double size = 12, std::string const &family = "Verdana") : size(size), family(family) {}
+        explicit Font(double size = 12, std::string const &family = "Verdana") : size(size), family(family) {}
         std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
@@ -398,8 +399,8 @@ namespace svg
     public:
         Shape(Fill const &fill = Fill(), Stroke const &stroke = Stroke(), double rotation = 0)
             : fill(fill), stroke(stroke), rotation(rotation) {}
-        virtual ~Shape() {}
-        virtual std::string toString(Layout const &layout) const = 0;
+        virtual ~Shape() override {}
+        virtual std::string toString(Layout const &layout) const override = 0;
         virtual void offset(Point const &offset) = 0;
         virtual std::unique_ptr<Shape> clone() const = 0;
 
@@ -594,9 +595,9 @@ namespace svg
     class Polygon : public Shape
     {
     public:
-        Polygon(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+        explicit Polygon(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke) {}
-        Polygon(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke) {}
+        explicit Polygon(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke) {}
         Polygon &operator<<(Point const &point)
         {
             points.push_back(point);
@@ -649,12 +650,12 @@ namespace svg
     class Path : public Shape
     {
     public:
-        Path(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+        explicit Path(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke)
         {
             startNewSubPath();
         }
-        Path(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke)
+        explicit Path(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke)
         {
             startNewSubPath();
         }
@@ -730,11 +731,11 @@ namespace svg
     class Polyline : public Shape
     {
     public:
-        Polyline(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+        explicit Polyline(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke) {}
-        Polyline(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke) {}
-        Polyline(std::vector<Point> const &points,
-                 Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+        explicit Polyline(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke) {}
+        explicit Polyline(std::vector<Point> const &points,
+                          Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke), points(points) {}
         Polyline &operator<<(Point const &point)
         {
@@ -840,8 +841,8 @@ namespace svg
     class LineChart : public Shape
     {
     public:
-        LineChart(Dimensions margin = Dimensions(), double scale = 1,
-                  Stroke const &axis_stroke = Stroke(.5, Color::Purple))
+        explicit LineChart(Dimensions margin = Dimensions(), double scale = 1,
+                           Stroke const &axis_stroke = Stroke(.5, Color::Purple))
             : axis_stroke(axis_stroke), margin(margin), scale(scale) {}
         LineChart &operator<<(Polyline const &polyline)
         {
@@ -974,7 +975,7 @@ namespace svg
     class Group : public Shape
     {
     public:
-        Group(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+        explicit Group(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke) {}
 
         Group(const Group&) = delete;
@@ -1025,11 +1026,8 @@ namespace svg
 
         Point getRotationCenter() const override
         {
-            Point center;
-            for (const auto &shape : shapes)
-            {
-                center += shape->getRotationCenter();
-            }
+            Point center = std::accumulate(shapes.begin(), shapes.end(), center, [](auto const &sum, const auto &shape)
+                                     { return sum + shape->getRotationCenter(); });
             center /= shapes.size();
             return center;
         }
@@ -1052,7 +1050,7 @@ namespace svg
     {
     public:
         Document() {};
-        Document(std::string const &file_name, Layout layout = Layout())
+        explicit Document(std::string const &file_name, Layout const &layout = Layout())
             : file_name(file_name), layout(layout) {}
 
         Document &operator<<(Shape const &shape)

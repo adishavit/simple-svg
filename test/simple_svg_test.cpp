@@ -62,7 +62,7 @@ TEST_F(SVGTest, ShapeTest)
     Circle circle(Point(50, 50), 20, Fill(Color::Red), Stroke(2, Color::Blue));
     std::string circleStr = circle.toString(layout);
 
-    std::cout << "ShapeTest circleStr: " << circleStr << std::endl;
+    // std::cout << "ShapeTest circleStr: " << circleStr << std::endl;
 
     EXPECT_TRUE(circleStr.find("cx=\"50\"") != std::string::npos);
     EXPECT_TRUE(circleStr.find("cy=\"50\"") != std::string::npos);
@@ -112,7 +112,7 @@ TEST_F(SVGTest, TextTestRotation)
     Text text(Point(50, 50), "Rotated Text", Fill(Color::Black), Font(12, "Arial"), Stroke(), 45);
     std::string textStr = text.toString(layout);
 
-    std::cout << "TextTestRotation SVG:\n" << textStr << std::endl;
+    // std::cout << "TextTestRotation SVG:\n" << textStr << std::endl;
 
     EXPECT_TRUE(textStr.find("x=\"50\"") != std::string::npos);
     EXPECT_TRUE(textStr.find("y=\"50\"") != std::string::npos);
