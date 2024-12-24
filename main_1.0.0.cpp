@@ -36,7 +36,7 @@ using namespace svg;
 
 // Demo page shows sample usage of the Simple SVG library.
 
-int main()
+void demo()
 {
     const std::string filename = "my_svg.svg";
     Dimensions dimensions(500, 500);
@@ -76,17 +76,67 @@ int main()
             << Point(100, 350) << Point(125, 360) << Point(165, 350)
             << Point(175, 300) << Point(125, 275) << Point(90, 315));
 
-    doc << Rectangle(Point(350, 275), 100, 75, Color::Yellow);
+    Rectangle rect(Point(350, 275), 100, 75, Color::Yellow);
+    rect.setRotation(60);
+    doc << rect;
 
     Group myGroup(Fill(Color::Red), Stroke(2, Color::Black));
     myGroup << Circle(Point(100, 100), 50, Fill(Color::Blue))
             << Rectangle(Point(200, 200), 100, 50, Fill(Color::Green));
+
+    Text text(Point(0, 0), "Hello world!", Color::Black, Font(10, "Verdana"), 90);
+
+    myGroup << text;
+
+    text.setRotation(-5); // Rotate the text 45 degrees
+    myGroup << text;      // Add the text to the group
 
     doc << myGroup;
 
     doc.save();
 
     std::cout << "SVG saved to: " << filename << std::endl;
+
+    system(("open " + filename).c_str()); // Open the file in the default browser
+}
+
+void demo2()
+{
+    const std::string filename = "my.svg";
+    Dimensions dimensions(200, 200);
+
+    // Use TopLeft layout so that (0, 0) is the top left corner of the SVG
+    // but the coordinates in use are relative to the bottom left corner.
+    Document doc(filename, Layout(dimensions, Layout::TopLeft));
+
+    Rectangle rect1(Point(0, 0), 100, 100, Fill(), Stroke(1, Color::Blue, true));
+    doc << rect1;
+
+    Rectangle rect2(Point(100, 100), 100, 100, Fill(), Stroke(1, Color::Red, true));
+    doc << rect2;
+    // rect2.setRotation(30);
+    // doc << rect2;
+
+    Text text0(Point(0, 0), "Hello world!", Color::Black, Font(10, "Verdana"), 90);
+    doc << text0;
+    text0.setRotation(45);
+    doc << text0;
+
+    Text text100(Point(100, 100), "Hello world!", Color::Black, Font(10, "Verdana"), 90);
+    doc << text100;
+    text100.setRotation(45);
+    doc << text100;
+
+    doc.save();
+
+    std::cout << "SVG saved to: " << filename << std::endl;
+
+    system(("open " + filename).c_str()); // Open the file in the default browser
+}
+
+int main() // Example usage of the Simple SVG library.
+{
+    demo2();
 
     return 0;
 }
