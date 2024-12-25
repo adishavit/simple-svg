@@ -45,8 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <sstream>
 #include <fstream>
-
 #include <iostream>
+#include <numeric>
 
 namespace svg
 {
@@ -328,9 +328,10 @@ namespace svg
     class Fill : public Serializeable
     {
     public:
-        explicit Fill(Color::Defaults color) : color(color) {}
-        explicit Fill(Color color = Color::Transparent)
-            : color(color) {}
+        Fill() : color(Color::Transparent) {}
+        explicit Fill(Color::Defaults colorDefault) : color(Color(colorDefault)) {}
+        explicit Fill(Color color) : color(color) {}
+
         std::string toString(Layout const &layout) const override
         {
             std::stringstream ss;
@@ -345,9 +346,9 @@ namespace svg
     class Stroke : public Serializeable
     {
     public:
-        explicit Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false,
+        explicit Stroke(double width = -1, Color color = Color(Color::Transparent), bool nonScalingStroke = false,
                         std::string linecap = "", std::string linejoin = "", const std::string &dasharray = "")
-            : width(width), color(color), nonScaling(nonScalingStroke), linecap(linecap), linejoin(const linejoin), dasharray(dasharray) {}
+            : width(width), color(color), nonScaling(nonScalingStroke), linecap(linecap), linejoin(linejoin), dasharray(dasharray) {}
 
         std::string toString(Layout const &layout) const override
         {
@@ -597,7 +598,9 @@ namespace svg
     public:
         explicit Polygon(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke) {}
-        explicit Polygon(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke) {}
+        explicit Polygon(Stroke const &stroke = Stroke())
+            : Shape(Fill(Color::Transparent), stroke) {}
+
         Polygon &operator<<(Point const &point)
         {
             points.push_back(point);
@@ -655,7 +658,7 @@ namespace svg
         {
             startNewSubPath();
         }
-        explicit Path(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke)
+        explicit Path(Stroke const &stroke = Stroke()) : Shape(Fill(Color::Transparent), stroke)
         {
             startNewSubPath();
         }
@@ -733,7 +736,7 @@ namespace svg
     public:
         explicit Polyline(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke) {}
-        explicit Polyline(Stroke const &stroke = Stroke()) : Shape(Color::Transparent, stroke) {}
+        explicit Polyline(Stroke const &stroke = Stroke()) : Shape(Fill(Color::Transparent), stroke) {}
         explicit Polyline(std::vector<Point> const &points,
                           Fill const &fill = Fill(), Stroke const &stroke = Stroke())
             : Shape(fill, stroke), points(points) {}
@@ -842,7 +845,7 @@ namespace svg
     {
     public:
         explicit LineChart(Dimensions margin = Dimensions(), double scale = 1,
-                           Stroke const &axis_stroke = Stroke(.5, Color::Purple))
+                           Stroke const &axis_stroke = Stroke(0.5, Color(Color::Purple)))
             : axis_stroke(axis_stroke), margin(margin), scale(scale) {}
         LineChart &operator<<(Polyline const &polyline)
         {
@@ -952,7 +955,7 @@ namespace svg
             double height = dimensions->height * 1.1;
 
             // Draw the axis.
-            Polyline axis(Color::Transparent, axis_stroke);
+            Polyline axis(Fill(Color::Transparent), axis_stroke);
             axis << Point(margin.width, margin.height + height) << Point(margin.width, margin.height)
                  << Point(margin.width + width, margin.height);
 
@@ -965,8 +968,7 @@ namespace svg
 
             std::vector<Circle> vertices;
             for (unsigned i = 0; i < shifted_polyline.points.size(); ++i)
-                vertices.push_back(Circle(shifted_polyline.points[i], getDimensions()->height / 30.0, Color::Black));
-
+                vertices.push_back(Circle(shifted_polyline.points[i], getDimensions()->height / 30.0, Fill(Color::Black)));
             return shifted_polyline.toString(layout) + vectorToString(vertices, layout);
         }
     };
@@ -1026,13 +1028,25 @@ namespace svg
 
         Point getRotationCenter() const override
         {
-            Point center = std::accumulate(shapes.begin(), shapes.end(), center, [](auto const &sum, const auto &shape)
-                                     { return sum + shape->getRotationCenter(); });
-            center /= shapes.size();
-            return center;
+            if (shapes.empty()) {
+                return Point();
+            }
+
+            double total_x = 0.0;
+            double total_y = 0.0;
+            int count = 0;
+
+            for (const auto& shape : shapes) {
+                Point center = shape->getRotationCenter();
+                total_x += center.x;
+                total_y += center.y;
+                ++count;
+            }
+
+            return Point(total_x / count, total_y / count);
         }
 
-            std::unique_ptr<Shape> clone() const override
+        std::unique_ptr<Shape> clone() const override
         {
             auto new_group = std::make_unique<Group>(fill, stroke);
             for (const auto& shape : shapes)
