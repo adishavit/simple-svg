@@ -36,45 +36,109 @@ using namespace svg;
 
 // Demo page shows sample usage of the Simple SVG library.
 
-int main()
+void demo1()
 {
-    Dimensions dimensions(100, 100);
-    Document doc("my_svg.svg", Layout(dimensions, Layout::BottomLeft));
+    const std::string filename = "my_svg.svg";
+    Dimensions dimensions(500, 500);
+    Document doc(filename, Layout(dimensions, Layout::BottomLeft));
 
     // Red image border.
-    Polygon border(Stroke(1, Color::Red));
+    Polygon border(Stroke(5, Color(Color::Red)));
     border << Point(0, 0) << Point(dimensions.width, 0)
-        << Point(dimensions.width, dimensions.height) << Point(0, dimensions.height);
+           << Point(dimensions.width, dimensions.height) << Point(0, dimensions.height);
     doc << border;
 
     // Long notation.  Local variable is created, children are added to varaible.
-    LineChart chart(5.0);
-    Polyline polyline_a(Stroke(.5, Color::Blue));
-    Polyline polyline_b(Stroke(.5, Color::Aqua));
-    Polyline polyline_c(Stroke(.5, Color::Fuchsia));
-    polyline_a << Point(0, 0) << Point(10, 30)
-        << Point(20, 40) << Point(30, 45) << Point(40, 44);
-    polyline_b << Point(0, 10) << Point(10, 22)
-        << Point(20, 30) << Point(30, 32) << Point(40, 30);
-    polyline_c << Point(0, 12) << Point(10, 15)
-        << Point(20, 14) << Point(30, 10) << Point(40, 2);
+    LineChart chart(Dimensions(), 25.0, Stroke(0.5, Color(Color::Purple)));
+    Polyline polyline_a(Stroke(3.0, Color(Color::Blue)));
+    Polyline polyline_b(Stroke(3.0, Color(Color::Aqua)));
+    Polyline polyline_c(Stroke(3.0, Color(Color::Fuchsia)));
+    polyline_a << Point(0, 0) << Point(50, 150)
+               << Point(100, 200) << Point(150, 225) << Point(200, 220);
+    polyline_b << Point(0, 50) << Point(50, 110)
+               << Point(100, 150) << Point(150, 160) << Point(200, 150);
+    polyline_c << Point(0, 60) << Point(50, 75)
+               << Point(100, 70) << Point(150, 50) << Point(200, 10);
     chart << polyline_a << polyline_b << polyline_c;
     doc << chart;
 
     // Condensed notation, parenthesis isolate temporaries that are inserted into parents.
-    doc << (LineChart(Dimensions(65, 5))
-        << (Polyline(Stroke(.5, Color::Blue)) << Point(0, 0) << Point(10, 8) << Point(20, 13))
-        << (Polyline(Stroke(.5, Color::Orange)) << Point(0, 10) << Point(10, 16) << Point(20, 20))
-        << (Polyline(Stroke(.5, Color::Cyan)) << Point(0, 5) << Point(10, 13) << Point(20, 16)));
+    doc << (LineChart(Dimensions(325, 25))
+            << (Polyline(Stroke(2.5, Color(Color::Blue))) << Point(0, 0) << Point(50, 40) << Point(100, 65))
+            << (Polyline(Stroke(2.5, Color(Color::Orange))) << Point(0, 50) << Point(50, 80) << Point(100, 100))
+            << (Polyline(Stroke(2.5, Color(Color::Cyan))) << Point(0, 25) << Point(50, 65) << Point(100, 80)));
 
-    doc << Circle(Point(80, 80), 20, Fill(Color(100, 200, 120)), Stroke(1, Color(200, 250, 150)));
+    doc << Circle(Point(400, 400), 100, Fill(Color(100, 200, 120)), Stroke(5, Color(200, 250, 150)));
 
-    doc << Text(Point(5, 77), "Simple SVG", Color::Silver, Font(10, "Verdana"));
+    doc << Text(Point(25, 385), "Simple SVG", Fill(Color::Silver), Font(50, "Verdana"));
 
-    doc << (Polygon(Color(200, 160, 220), Stroke(.5, Color(150, 160, 200))) << Point(20, 70)
-        << Point(25, 72) << Point(33, 70) << Point(35, 60) << Point(25, 55) << Point(18, 63));
+    doc << (Polygon(Fill(Color(200, 160, 220)), Stroke(2.5, Color(150, 160, 200)))
+            << Point(100, 350) << Point(125, 360) << Point(165, 350)
+            << Point(175, 300) << Point(125, 275) << Point(90, 315));
 
-    doc << Rectangle(Point(70, 55), 20, 15, Color::Yellow);
+    Rectangle rect(Point(350, 275), 100, 75, Fill(Color::Yellow));
+    rect.setRotation(60);
+    doc << rect;
+
+    Group myGroup(Fill(Color::Red), Stroke(2, Color(Color::Black)));
+    myGroup << Circle(Point(100, 100), 50, Fill(Color::Blue))
+            << Rectangle(Point(200, 200), 100, 50, Fill(Color::Green));
+
+    Text text(Point(0, 0), "Hello world!", Fill(Color::Black), Font(10, "Verdana"), Stroke(), 90);
+
+    myGroup << text;
+
+    text.setRotation(-5); // Rotate the text 45 degrees
+    myGroup << text;      // Add the text to the group
+
+    doc << myGroup;
 
     doc.save();
+
+    std::cout << "SVG saved to: " << filename << std::endl;
+
+    system(("open " + filename).c_str()); // Open the file in the default browser
+}
+
+void demo2()
+{
+    const std::string filename = "my.svg";
+    Dimensions dimensions(200, 200);
+
+    // Use TopLeft layout so that (0, 0) is the top left corner of the SVG
+    // but specify coordinates in user space (origin at bottom left, +y axis upwards)
+    Document doc(filename, Layout(dimensions, Layout::TopLeft));
+
+    Rectangle rect1(Point(0, 0), 100, 100, Fill(), Stroke(1.0, Color(Color::Blue)));
+    doc << rect1;
+
+    Rectangle rect2(Point(100, 100), 100, 100, Fill(), Stroke(1.0, Color(Color::Red)));
+    doc << rect2;
+
+    {
+        Text text(Point(0, 0), "Hello world!", Fill(Color::Black), Font(10, "Verdana"), Stroke(), 90);
+        doc << text;
+        text.setRotation(45);
+        doc << text;
+    }
+    {
+        Text text(Point(100, 100), "Hello world!", Fill(Color::Black), Font(10, "Verdana"), Stroke(), 90);
+        doc << text;
+        text.setRotation(45);
+        doc << text;
+    }
+
+    doc.save();
+
+    std::cout << "SVG saved to: " << filename << std::endl;
+
+    system(("open " + filename).c_str()); // Open the file in the default browser
+}
+
+int main() // Example usage of the Simple SVG library.
+{
+    demo1();
+    demo2();
+
+    return 0;
 }
