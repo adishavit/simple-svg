@@ -101,6 +101,15 @@ namespace svg
         Point(double x = 0, double y = 0) : x(x), y(y) { }
         double x;
         double y;
+
+        Point operator+(const Point& other) const {
+            return Point(x + other.x, y + other.y);
+        }
+
+        Point operator-(const Point &other) const
+        {
+            return Point(x - other.x, y - other.y);
+        }
     };
     inline optional<Point> getMinPoint(std::vector<Point> const & points)
     {
@@ -307,9 +316,9 @@ namespace svg
     class Circle : public Shape
     {
     public:
-        Circle(Point const & center, double diameter, Fill const & fill,
-            Stroke const & stroke = Stroke())
-            : Shape(fill, stroke), center(center), radius(diameter / 2) { }
+        Circle(Point const &center, double diameter, Fill const &fill = Fill(),
+               Stroke const &stroke = Stroke())
+            : Shape(fill, stroke), center(center), radius(diameter / 2) {}
         std::string toString(Layout const & layout) const
         {
             std::stringstream ss;
@@ -454,9 +463,9 @@ namespace svg
     {
     public:
        Path(Fill const & fill = Fill(), Stroke const & stroke = Stroke())
-          : Shape(fill, stroke) 
+          : Shape(fill, stroke)
        {  startNewSubPath(); }
-       Path(Stroke const & stroke = Stroke()) : Shape(Color::Transparent, stroke) 
+       Path(Stroke const & stroke = Stroke()) : Shape(Color::Transparent, stroke)
        {  startNewSubPath(); }
        Path & operator<<(Point const & point)
        {
