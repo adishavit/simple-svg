@@ -42,3 +42,15 @@ simple_svg_test
 ```
 
 to see the details of the tests.
+
+## Code modifications to satisfy `cppcheck`
+
+Running `cppcheck` on the code:
+```
+cppcheck --enable=style --check-level=exhaustive main_1.0.0.cpp
+```
+
+produced errors against the `cppcheck` ruleset.
+
+These errors were fixed by making `explicit` constructors for Dimensions, Point, Layout, Color
+and updating code that uses these classes.

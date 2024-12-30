@@ -91,14 +91,14 @@ namespace svg
     struct Dimensions
     {
         Dimensions(double width, double height) : width(width), height(height) { }
-        Dimensions(double combined = 0) : width(combined), height(combined) { }
+        explicit Dimensions(double combined = 0) : width(combined), height(combined) { }
         double width;
         double height;
     };
 
     struct Point
     {
-        Point(double x = 0, double y = 0) : x(x), y(y) { }
+        explicit Point(double x = 0, double y = 0) : x(x), y(y) {}
         double x;
         double y;
 
@@ -145,9 +145,9 @@ namespace svg
     {
         enum Origin { TopLeft, BottomLeft, TopRight, BottomRight };
 
-        Layout(Dimensions const & dimensions = Dimensions(400, 300), Origin origin = BottomLeft,
-            double scale = 1, Point const & origin_offset = Point(0, 0))
-            : dimensions(dimensions), scale(scale), origin(origin), origin_offset(origin_offset) { }
+        explicit Layout(Dimensions const &dimensions = Dimensions(400, 300), Origin origin = BottomLeft,
+                       double scale = 1, Point const &origin_offset = Point(0, 0))
+            : dimensions(dimensions), scale(scale), origin(origin), origin_offset(origin_offset) {}
         Dimensions dimensions;
         double scale;
         Origin origin;
@@ -190,7 +190,7 @@ namespace svg
             Green, Lime, Magenta, Orange, Purple, Red, Silver, White, Yellow };
 
         Color(int r, int g, int b) : transparent(false), red(r), green(g), blue(b) { }
-        Color(Defaults color)
+        explicit Color(Defaults color)
             : transparent(false), red(0), green(0), blue(0)
         {
             switch (color)
@@ -240,9 +240,10 @@ namespace svg
     class Fill : public Serializeable
     {
     public:
-        Fill(Color::Defaults color) : color(color) { }
-        Fill(Color color = Color::Transparent)
-            : color(color) { }
+        Fill() : color(Color::Transparent) { }
+        explicit Fill(Color::Defaults color) : color(color) { }
+        explicit Fill(const Color& color) : color(color) { }
+
         std::string toString(Layout const & layout) const
         {
             std::stringstream ss;
@@ -256,8 +257,12 @@ namespace svg
     class Stroke : public Serializeable
     {
     public:
-        Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false)
+        Stroke(double width = -1, Color::Defaults colorDefault = Color::Transparent, bool nonScalingStroke = false)
+            : width(width), color(Color(colorDefault)), nonScaling(nonScalingStroke) { }
+
+        Stroke(double width, const Color& color, bool nonScalingStroke = false)
             : width(width), color(color), nonScaling(nonScalingStroke) { }
+
         std::string toString(Layout const & layout) const
         {
             // If stroke width is invalid.
@@ -294,8 +299,11 @@ namespace svg
     class Shape : public Serializeable
     {
     public:
-        Shape(Fill const & fill = Fill(), Stroke const & stroke = Stroke())
-            : fill(fill), stroke(stroke) { }
+        Shape() : fill(Fill()), stroke(Stroke()) { }
+        Shape(const Fill& fill) : fill(fill), stroke(Stroke()) { }
+        Shape(const Stroke& stroke) : fill(Fill()), stroke(stroke) { }
+        Shape(const Fill& fill, const Stroke& stroke) : fill(fill), stroke(stroke) { }
+
         virtual ~Shape() { }
         virtual std::string toString(Layout const & layout) const = 0;
         virtual void offset(Point const & offset) = 0;
@@ -303,6 +311,7 @@ namespace svg
         Fill fill;
         Stroke stroke;
     };
+
     template <typename T>
     inline std::string vectorToString(std::vector<T> collection, Layout const & layout)
     {
@@ -427,9 +436,10 @@ namespace svg
     class Polygon : public Shape
     {
     public:
-        Polygon(Fill const & fill = Fill(), Stroke const & stroke = Stroke())
-            : Shape(fill, stroke) { }
-        Polygon(Stroke const & stroke = Stroke()) : Shape(Color::Transparent, stroke) { }
+        Polygon(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+            : Shape(fill, stroke) {}
+        Polygon(Stroke const &stroke = Stroke())
+            : Shape(Fill(Color::Transparent), stroke) {}
         Polygon & operator<<(Point const & point)
         {
             points.push_back(point);
@@ -462,11 +472,17 @@ namespace svg
     class Path : public Shape
     {
     public:
-       Path(Fill const & fill = Fill(), Stroke const & stroke = Stroke())
-          : Shape(fill, stroke)
-       {  startNewSubPath(); }
-       Path(Stroke const & stroke = Stroke()) : Shape(Color::Transparent, stroke)
-       {  startNewSubPath(); }
+        Path(Fill const &fill = Fill(), Stroke const &stroke = Stroke())
+            : Shape(fill, stroke)
+        {
+            startNewSubPath();
+        }
+
+        Path(Stroke const &stroke = Stroke())
+            : Shape(Fill(Color::Transparent), stroke)
+        {
+            startNewSubPath();
+        }
        Path & operator<<(Point const & point)
        {
           paths.back().push_back(point);
@@ -520,10 +536,14 @@ namespace svg
     public:
         Polyline(Fill const & fill = Fill(), Stroke const & stroke = Stroke())
             : Shape(fill, stroke) { }
-        Polyline(Stroke const & stroke = Stroke()) : Shape(Color::Transparent, stroke) { }
+
+        Polyline(Stroke const & stroke = Stroke())
+            : Shape(Fill(Color::Transparent), stroke) { }
+
         Polyline(std::vector<Point> const & points,
             Fill const & fill = Fill(), Stroke const & stroke = Stroke())
             : Shape(fill, stroke), points(points) { }
+
         Polyline & operator<<(Point const & point)
         {
             points.push_back(point);
@@ -646,9 +666,9 @@ namespace svg
             double height = dimensions->height * 1.1;
 
             // Draw the axis.
-            Polyline axis(Color::Transparent, axis_stroke);
+            Polyline axis(Fill(Color::Transparent), axis_stroke);
             axis << Point(margin.width, margin.height + height) << Point(margin.width, margin.height)
-                << Point(margin.width + width, margin.height);
+                 << Point(margin.width + width, margin.height);
 
             return axis.toString(layout);
         }
@@ -659,7 +679,9 @@ namespace svg
 
             std::vector<Circle> vertices;
             for (unsigned i = 0; i < shifted_polyline.points.size(); ++i)
-                vertices.push_back(Circle(shifted_polyline.points[i], getDimensions()->height / 30.0, Color::Black));
+                vertices.push_back(Circle(shifted_polyline.points[i],
+                                          getDimensions()->height / 30.0,
+                                          Fill(Color::Black)));  // Use Fill instead of direct Color
 
             return shifted_polyline.toString(layout) + vectorToString(vertices, layout);
         }
