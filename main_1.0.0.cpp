@@ -34,21 +34,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace svg;
 
-// Demo page shows sample usage of the Simple SVG library.
+ShapeColl createSVGElements() {
+    std::cout << "Creating SVG elements..." << std::endl;
 
-int main()
-{
-    std::string filename = "my_svg.svg";
-    Dimensions dimensions(500, 500);
-    Document doc(filename, Layout(dimensions, Layout::BottomLeft));
+    ShapeColl elements;
 
-    // Red image border.
-    Polygon border(Stroke(1, Color::Red));
-    border << Point(0, 0) << Point(dimensions.width, 0)
-        << Point(dimensions.width, dimensions.height) << Point(0, dimensions.height);
-    doc << border;
-
-    // Long notation.  Local variable is created, children are added to variable.
+    // Long notation
     LineChart chart(Dimensions(12.5, 12.5));
     Polyline polyline_a(Stroke(1.25, Color::Blue));
     Polyline polyline_b(Stroke(1.25, Color::Aqua));
@@ -60,26 +51,76 @@ int main()
     polyline_c << Point(0, 30) << Point(25, 37.5)
         << Point(50, 35) << Point(75, 25) << Point(100, 5);
     chart << polyline_a << polyline_b << polyline_c;
-    doc << chart;
+    elements << chart;
 
-    // Condensed notation, parenthesis isolate temporaries that are inserted into parents.
-    doc << (LineChart(Dimensions(162.5, 12.5))
+    // Condensed notation
+    elements << (LineChart(Dimensions(162.5, 12.5))
         << (Polyline(Stroke(1.25, Color::Blue)) << Point(0, 0) << Point(25, 20) << Point(50, 32.5))
         << (Polyline(Stroke(1.25, Color::Orange)) << Point(0, 25) << Point(25, 40) << Point(50, 50))
         << (Polyline(Stroke(1.25, Color::Cyan)) << Point(0, 12.5) << Point(25, 32.5) << Point(50, 40)));
 
-    doc << Circle(Point(200, 200), 50, Fill(Color(100, 200, 120)), Stroke(2.5, Color(200, 250, 150)));
+    elements << Circle(Point(200, 200), 50, Fill(Color(100, 200, 120)), Stroke(2.5, Color(200, 250, 150)));
 
-    doc << Text(Point(12.5, 192.5), "Simple SVG", Fill(Color::Silver), Font(25, "Verdana"));
+    elements << Text(Point(12.5, 192.5), "Simple SVG", Fill(Color::Silver), Font(25, "Verdana"));
 
-    doc << (Polygon(Fill(Color(200, 160, 220)), Stroke(1.25, Color(150, 160, 200))) << Point(50, 175)
+    elements << (Polygon(Fill(Color(200, 160, 220)), Stroke(1.25, Color(150, 160, 200))) << Point(50, 175)
         << Point(62.5, 180) << Point(82.5, 175) << Point(87.5, 150) << Point(62.5, 137.5) << Point(45, 157.5));
 
-    doc << Rectangle(Point(175, 137.5), 50, 37.5, Fill(Color::Yellow), Stroke(1, Color::Black));
+    elements << Rectangle(Point(175, 137.5), 50, 37.5, Fill(Color::Yellow), Stroke(1, Color::Black));
 
-    if (doc.save()) {
-        std::cout << "File saved successfully: " << filename << std::endl;
-    } else {
-        std::cout << "Failed to save the file: " << filename << std::endl;
+    std::cout << "SVG elements created successfully." << std::endl;
+    return elements;
+}
+
+// Demo page shows sample usage of the Simple SVG library.
+
+
+int main()
+{
+    try
+    {
+        std::cout << "Starting main function..." << std::endl;
+
+        std::string filename = "my_svg.svg";
+        Dimensions dimensions(500, 500);
+
+        std::cout << "Creating Document..." << std::endl;
+        Document doc(filename, Layout(dimensions, Layout::BottomLeft));
+
+        std::cout << "Creating border..." << std::endl;
+        Polygon border(Stroke(1, Color::Red));
+        border << Point(0, 0) << Point(dimensions.width, 0)
+               << Point(dimensions.width, dimensions.height) << Point(0, dimensions.height);
+
+        std::cout << "Adding border to document..." << std::endl;
+        doc << border;
+
+        std::cout << "Creating SVG elements..." << std::endl;
+        ShapeColl elements = createSVGElements();
+
+        std::cout << "Adding elements to document..." << std::endl;
+        doc << elements;
+
+        std::cout << "Saving document..." << std::endl;
+        if (doc.save())
+        {
+            std::cout << "File saved successfully: " << filename << std::endl;
+        }
+        else
+        {
+            std::cout << "Failed to save the file: " << filename << std::endl;
+        }
+
+        std::cout << "Main function completed successfully." << std::endl;
     }
+    catch (const std::exception &e)
+    {
+        std::cerr << "An exception occurred: " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "An unknown exception occurred." << std::endl;
+    }
+
+    return 0;
 }

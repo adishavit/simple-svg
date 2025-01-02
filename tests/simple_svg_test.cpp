@@ -27,12 +27,28 @@ protected:
     }
 };
 
-TEST_F(SVGTest, ShapeTest)
+TEST_F(SVGTest,  ShapeCollTest)
+{
+    ShapeColl ShapeColl;
+    std::string sercollStr = ShapeColl.toString(layout);
+
+    // std::cout << "* ShapeCollTest sercollStr: " << sercollStr << std::endl;
+    EXPECT_TRUE(sercollStr.empty());
+
+    ShapeColl << Text(Point(10, 20), "Hello, SVG!", Fill(Color::Black), Font(12, "Arial"));
+
+    std::string expectedStr = "\t<text x=\"10\" y=\"20\" fill=\"rgb(0,0,0)\" font-size=\"12\" font-family=\"Arial\" >Hello, SVG!</text>\n";
+    sercollStr = ShapeColl.toString(layout);
+    // std::cout << "* ShapeCollTest sercollStr: " << sercollStr << std::endl;
+    EXPECT_EQ(sercollStr, expectedStr);
+}
+
+TEST_F(SVGTest, Shape2Test)
 {
     Circle circle(Point(50, 50), 20, Fill(Color::Red), Stroke(2, Color::Blue));
     std::string circleStr = circle.toString(layout);
 
-    // std::cout << "ShapeTest circleStr: " << circleStr << std::endl;
+    // std::cout << "* Shape2Test circleStr: " << circleStr << std::endl;
 
     EXPECT_TRUE(circleStr.find("cx=\"50\"") != std::string::npos);
     EXPECT_TRUE(circleStr.find("cy=\"50\"") != std::string::npos);

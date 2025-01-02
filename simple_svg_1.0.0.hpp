@@ -178,9 +178,9 @@ namespace svg
     class Serializeable
     {
     public:
-        Serializeable() { }
-        virtual ~Serializeable() { };
-        virtual std::string toString(Layout const & layout) const = 0;
+        Serializeable() {}
+        virtual ~Serializeable() {};
+        virtual std::string toString(Layout const &layout) const = 0;
     };
 
     class Color : public Serializeable
@@ -310,6 +310,45 @@ namespace svg
     protected:
         Fill fill;
         Stroke stroke;
+    };
+
+    class ShapeColl : public Shape
+    {
+    public:
+        ShapeColl() : Shape(Fill(), Stroke()) {}
+
+        template <typename T>
+        ShapeColl &operator<<(const T &serializeable)
+        {
+            static_assert(std::is_base_of<Serializeable, T>::value,
+                          "Must be derived from Serializeable");
+            elements.push_back(std::make_shared<T>(serializeable));
+            return *this;
+        }
+
+        std::string toString(Layout const &layout) const override
+        {
+            std::string ret;
+            for (const auto &element : elements)
+            {
+                ret += element->toString(layout);
+            }
+            return ret;
+        }
+
+        void offset(Point const &offset) override
+        {
+            for (const auto &element : elements)
+            {
+                if (Shape *shape = dynamic_cast<Shape *>(element.get()))
+                {
+                    shape->offset(offset);
+                }
+            }
+        }
+
+    private:
+        std::vector<std::shared_ptr<Serializeable>> elements;
     };
 
     template <typename T>
