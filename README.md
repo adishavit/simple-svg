@@ -32,13 +32,13 @@ to create a demo SVG file, `my_svg.svg`.
 You can run the tests with:
 
 ```
-ctest
+ctest               # brief info on success or failure
 ```
 
 or with
 
 ```
-simple_svg_test
+simple_svg_test     # detailed info on success or failure
 ```
 
 to see the details of the tests.
@@ -46,6 +46,7 @@ to see the details of the tests.
 ## Code modifications to satisfy `cppcheck`
 
 Running `cppcheck` on the code:
+
 ```
 cppcheck --enable=style --check-level=exhaustive main_1.0.0.cpp
 ```
@@ -54,3 +55,33 @@ produced errors against the `cppcheck` ruleset.
 
 These errors were fixed by making `explicit` constructors for Dimensions, Point, Layout, Color
 and updating code that uses these classes.
+
+## Classes available from the library
+
+```
+Color - Serializable
+Fill - Serializable
+Stroke - Serializable
+Font - Serializable
+ShapeColl - Shape
+Circle - Shape
+Elipse - Shape
+Rectangle - Shape
+Line - Shape
+Polygon - Shape
+Path - Shape
+Polyline - Shape
+Text - Shape
+LineChart - Shape
+Document - Neither
+```
+
+A `Document` instance creates a svg file.
+
+You can add any number of Shape instances to the document.
+
+You use the serializable classes to set the properties of the shapes.
+
+## Example usage
+
+See demo code in `main_1.0.0.cpp` for example usage.

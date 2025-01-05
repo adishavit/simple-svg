@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Get a list of all staged .hpp and .cpp files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(hpp|cpp)$')
+
+# Apply clang-format to each staged file
+for FILE in $STAGED_FILES; do
+    clang-format -style=file -i "$FILE"
+    git add "$FILE"
+done
+
+# Continue with the commit
+exit 0
