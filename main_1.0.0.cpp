@@ -34,7 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace svg;
 
-ShapeColl createSVGElements() {
+ShapeColl createSVGElements()
+{
     ShapeColl elements;
 
     // Create a LineChart with Long notation
@@ -46,12 +47,12 @@ ShapeColl createSVGElements() {
     Polyline polyline_c(Stroke(1.25, Color::Fuchsia));
 
     // Add points to each polyline
-    polyline_a << Point(0, 0) << Point(25, 75)
-        << Point(50, 100) << Point(75, 112.5) << Point(100, 110);
-    polyline_b << Point(0, 25) << Point(25, 55)
-        << Point(50, 75) << Point(75, 80) << Point(100, 75);
-    polyline_c << Point(0, 30) << Point(25, 37.5)
-        << Point(50, 35) << Point(75, 25) << Point(100, 5);
+    polyline_a << Point(0, 0) << Point(25, 75) << Point(50, 100)
+               << Point(75, 112.5) << Point(100, 110);
+    polyline_b << Point(0, 25) << Point(25, 55) << Point(50, 75)
+               << Point(75, 80) << Point(100, 75);
+    polyline_c << Point(0, 30) << Point(25, 37.5) << Point(50, 35)
+               << Point(75, 25) << Point(100, 5);
 
     // Add the polylines to the chart
     chart << polyline_a << polyline_b << polyline_c;
@@ -61,22 +62,40 @@ ShapeColl createSVGElements() {
 
     // Create and add another LineChart with Condensed notation
     elements << (LineChart(Dimensions(162.5, 12.5))
-        << (Polyline(Stroke(1.25, Color::Blue)) << Point(0, 0) << Point(25, 20) << Point(50, 32.5))
-        << (Polyline(Stroke(1.25, Color::Orange)) << Point(0, 25) << Point(25, 40) << Point(50, 50))
-        << (Polyline(Stroke(1.25, Color::Cyan)) << Point(0, 12.5) << Point(25, 32.5) << Point(50, 40)));
+                 << (Polyline(Stroke(1.25, Color::Blue))
+                     << Point(0, 0) << Point(25, 20) << Point(50, 32.5))
+                 << (Polyline(Stroke(1.25, Color::Orange))
+                     << Point(0, 25) << Point(25, 40) << Point(50, 50))
+                 << (Polyline(Stroke(1.25, Color::Cyan))
+                     << Point(0, 12.5) << Point(25, 32.5) << Point(50, 40)));
 
     // Create and add a Circle with specific properties
-    elements << Circle(Point(200, 200), 50, Fill(Color(100, 200, 120)), Stroke(2.5, Color(200, 250, 150)));
+    elements << Circle(Point(200, 200), 50, Fill(Color(100, 200, 120)),
+                       Stroke(2.5, Color(200, 250, 150)));
 
     // Create and add a Text element with specific properties
-    elements << Text(Point(12.5, 192.5), "Simple SVG", Fill(Color::Silver), Font(25, "Verdana"));
+    auto text = Text(Point(12.5, 192.5), "Simple SVG", Fill(Color::Silver),
+                     Font(25, "Verdana"));
+    elements << text;
+
+    // Create and add a Rectangle to represent the Text bounding box
+    auto bb = text.getBoundingBox();
+    elements << Rectangle(bb.origin, bb.size.width, bb.size.height,
+                          Fill(Color::Transparent), Stroke(1, Color::Red));
 
     // Create and add a Polygon with specific properties
-    elements << (Polygon(Fill(Color(200, 160, 220)), Stroke(1.25, Color(150, 160, 200))) << Point(50, 175)
-        << Point(62.5, 180) << Point(82.5, 175) << Point(87.5, 150) << Point(62.5, 137.5) << Point(45, 157.5));
+    elements << (Polygon(Fill(Color(200, 160, 220)),
+                         Stroke(1.25, Color(150, 160, 200)))
+                 << Point(50, 175) << Point(62.5, 180) << Point(82.5, 175)
+                 << Point(87.5, 150) << Point(62.5, 137.5) << Point(45, 157.5));
 
     // Create and add a Rectangle with specific properties
-    elements << Rectangle(Point(175, 137.5), 50, 37.5, Fill(Color::Yellow), Stroke(1, Color::Black));
+    elements << Rectangle(Point(175, 137.5), 50, 37.5, Fill(Color::Yellow),
+                          Stroke(1, Color::Black));
+
+    // Create an ellipse with specific properties
+    elements << Elipse(Point(200, 120), 50, 25, Fill(Color::Red),
+                       Stroke(1.5, Color::Black));
 
     // Return the collection of SVG elements
     return elements;
@@ -90,18 +109,18 @@ void demoDocLayout(const Layout &layout)
     std::string filename;
     switch (layout.origin)
     {
-    case Layout::TopLeft:
-        filename = "svg_topleft.svg";
-        break;
-    case Layout::TopRight:
-        filename = "svg_topright.svg";
-        break;
-    case Layout::BottomLeft:
-        filename = "svg_bottomleft.svg";
-        break;
-    case Layout::BottomRight:
-        filename = "svg_bottomright.svg";
-        break;
+        case Layout::TopLeft:
+            filename = "svg_topleft.svg";
+            break;
+        case Layout::TopRight:
+            filename = "svg_topright.svg";
+            break;
+        case Layout::BottomLeft:
+            filename = "svg_bottomleft.svg";
+            break;
+        case Layout::BottomRight:
+            filename = "svg_bottomright.svg";
+            break;
     }
 
     // Create SVG document with specified layout
@@ -116,7 +135,9 @@ void demoDocLayout(const Layout &layout)
 
     // Mark origin and the farthest point in the layout with circles
     doc << Circle(Point(0, 0), 20, Fill(Color::Red), Stroke(1, Color::Black));
-    doc << Circle(Point(layout.dimensions.width - 10, layout.dimensions.height - 10), 20, Fill(Color::Red), Stroke(1, Color::Black));
+    doc << Circle(
+        Point(layout.dimensions.width - 10, layout.dimensions.height - 10), 20,
+        Fill(Color::Red), Stroke(1, Color::Black));
 
     // Create and add all demo shapes
     ShapeColl elements = createSVGElements();
@@ -141,11 +162,9 @@ int main()
         Dimensions dimensions(500, 500);
 
         // Define array of all possible coordinate system origins
-        Layout::Origin layouts[] = {
-            Layout::TopLeft,
-            Layout::TopRight,
-            Layout::BottomLeft,
-            Layout::BottomRight};
+        const Layout::Origin layouts[] = {Layout::TopLeft, Layout::TopRight,
+                                          Layout::BottomLeft,
+                                          Layout::BottomRight};
 
         // Generate SVG file for each coordinate system origin
         for (Layout::Origin origin : layouts)
