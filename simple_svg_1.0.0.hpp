@@ -66,8 +66,8 @@ template <typename T>
 class optional
 {
    public:
-    explicit optional<T>(T const &type) : valid(true), type(type) {}
-    optional<T>() : valid(false), type(T()) {}
+    explicit optional(T const &type) : valid(true), type(type) {}
+    optional() : valid(false), type(T()) {}
     T *operator->()
     {
         // If we try to access an invalid value, an exception is thrown.
